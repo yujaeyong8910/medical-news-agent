@@ -36,11 +36,13 @@ async function getSourceCounts(): Promise<Record<string, number>> {
     })
   )
 
-  return Object.fromEntries(
-    results
-      .filter((r): r is PromiseFulfilledResult<{ src: string; count: number }> => r.status === 'fulfilled')
-      .map((r) => [r.value.src, r.value.count])
-  )
+  const counts: Record<string, number> = {}
+  for (const r of results) {
+    if (r.status === 'fulfilled') {
+      counts[r.value.src] = r.value.count
+    }
+  }
+  return counts
 }
 
 function Skeleton() {
