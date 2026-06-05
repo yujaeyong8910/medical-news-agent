@@ -41,24 +41,24 @@ export async function crawlPubMed(): Promise<RawArticle[]> {
 
     const summaryData: ESummaryResult = await summaryRes.json()
 
-    return ids
-      .map((id) => {
-        const item = summaryData.result?.[id]
-        if (!item?.title) return null
-        const authors = item.authors?.slice(0, 3).map((a) => a.name).join(', ') ?? ''
-        return {
-          source: 'PubMed',
-          title: item.title,
-          url: `https://pubmed.ncbi.nlm.nih.gov/${id}/`,
-          content: [
-            `Journal: ${item.fulljournalname || item.source}`,
-            authors && `Authors: ${authors}`,
-            `Published: ${item.pubdate}`,
-          ].filter(Boolean).join('. '),
-          publishedAt: item.pubdate ? new Date(item.pubdate) : undefined,
-        } satisfies RawArticle
+    const articles: RawArticle[] = []
+    for (const id of ids) {
+      const item = summaryData.result?.[id]
+      if (!item?.title) continue
+      const authors = item.authors?.slice(0, 3).map((a) => a.name).join(', ') ?? ''
+      articles.push({
+        source: 'PubMed',
+        title: item.title,
+        url: `https://pubmed.ncbi.nlm.nih.gov/${id}/`,
+        content: [
+          `Journal: ${item.fulljournalname || item.source}`,
+          authors && `Authors: ${authors}`,
+          `Published: ${item.pubdate}`,
+        ].filter(Boolean).join('. '),
+        publishedAt: item.pubdate ? new Date(item.pubdate) : undefined,
       })
-      .filter((a): a is RawArticle => a !== null)
+    }
+    return articles
   } catch (err) {
     console.error('[PubMed] crawl failed:', err)
     return []
